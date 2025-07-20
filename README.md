@@ -1,4 +1,4 @@
-# 🎯 Clasificación de Grupos Relacionados por el Diagnóstico (GRD) con XGBoost
+# 🎯 Clasificación de Grupos Relacionados por el Diagnóstico (GRD)
 
 ![Logo UdeA](logoU.png)
 
