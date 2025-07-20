@@ -120,8 +120,6 @@ def prediction_form_view(request):
                 
                 prediction_result = {
                     'prediction': display_code,
-                    'prediction_full': prediction_code,
-                    'prediction_encoded': int(y_pred_encoded[0]),
                     'confidence': confidence
                 }
                 

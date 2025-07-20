@@ -118,7 +118,7 @@ class PredictionForm(forms.Form):
     )
     
     dx_principal_egreso = FlexibleChoiceField(
-        label="Diagnóstico principal de egreso (código CIE-10)",
+        label="Diagnóstico principal de egreso",
         choices=[],
         widget=forms.Select(attrs={'class': 'form-control'})
     )
@@ -186,7 +186,7 @@ class PredictionForm(forms.Form):
     )
     
     tipo_servicio = forms.ChoiceField(
-        label="Tipo de servicio",
+        label="Servicio que dio el alta",
         choices=[
             ('CIRUGIA', "Cirugía"),
             ('NO APLICA', "No aplica"),
