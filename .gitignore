@@ -22,8 +22,8 @@ ENV/
 env.bak/
 venv.bak/
 
-# Large model files (keep only the smaller one)
-train/best_model.pkl
+# Large model files are now handled by Git LFS
+# See .gitattributes for LFS configuration
 
 # Data files (optional - uncomment if you want to exclude data)
 # data/data.xlsx
