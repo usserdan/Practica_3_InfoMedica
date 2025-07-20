@@ -1,6 +1,9 @@
 # 🎯 Clasificación de Grupos Relacionados por el Diagnóstico (GRD)
 
-![Logo UdeA](logoU.png)
+<p align="center">
+  <img src="logoUdeA.png" alt="Logo UdeA" width="500"/>
+</p>
+
 
 ## 📘 Proyecto 3 – Informática Médica  
 **Autores:**  
