@@ -1,0 +1,20 @@
+# Django y REST Framework
+Django==5.2.4
+djangorestframework==3.15.2
+
+# Machine Learning
+pandas==2.2.2
+numpy==1.26.4
+scikit-learn==1.5.1
+xgboost==2.1.1
+joblib==1.4.2
+
+# Visualización
+matplotlib==3.9.1
+seaborn==0.13.2
+
+
+# Herramientas adicionales
+python-dotenv==1.0.1
+pytest==8.3.2
+pytest-django==4.8.0
