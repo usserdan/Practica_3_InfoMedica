@@ -1,0 +1,415 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Formulario de Predicción GRD{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <!-- header -->
+        <div class="text-center mb-4">
+            <h1 class="display-5 fw-bold text-primary">
+                <i class="fas fa-stethoscope me-3"></i>
+                Predictor de GRD
+            </h1>
+            <p class="lead text-muted">
+                Ingrese los datos clínicos del paciente para obtener la predicción del Grupo Relacionado por el Diagnóstico
+            </p>
+        </div>
+
+        <!-- resultado de predicción -->
+        {% if prediction_result %}
+        <div class="card border-success mb-4">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-line me-2"></i>
+                    Resultado de la Predicción
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h4 class="text-success">
+                            <i class="fas fa-bullseye me-2"></i>
+                            GRD Predicho: <span class="badge bg-success fs-5">{{ prediction_result.prediction }}</span>
+                        </h4>
+                        {% if prediction_result.prediction_full %}
+                        <p class="text-muted small">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Código completo: {{ prediction_result.prediction_full }}
+                        </p>
+                        {% endif %}
+                        {% if prediction_result.prediction_encoded %}
+                        <p class="text-muted small">
+                            <i class="fas fa-code me-1"></i>
+                            Valor codificado interno: {{ prediction_result.prediction_encoded }}
+                        </p>
+                        {% endif %}
+                    </div>
+                    {% if prediction_result.confidence %}
+                    <div class="col-md-6">
+                        <h5 class="text-info">
+                            <i class="fas fa-percentage me-2"></i>
+                            Confianza: {{ prediction_result.confidence|floatformat:1 }}%
+                        </h5>
+                        <div class="progress">
+                            <div class="progress-bar bg-info" role="progressbar" 
+                                 style="width: {{ prediction_result.confidence }}%" 
+                                 aria-valuenow="{{ prediction_result.confidence }}" 
+                                 aria-valuemin="0" 
+                                 aria-valuemax="100">
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Formulario -->
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-clipboard-list me-2"></i>
+                    Datos del Paciente
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="post" novalidate>
+                    {% csrf_token %}
+                    
+                    <!-- Información Básica del Paciente -->
+                    <div class="section-divider">
+                        <h6 class="section-title">
+                            <i class="fas fa-user me-2"></i>
+                            Información Básica del Paciente
+                        </h6>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="{{ form.edad.id_for_label }}" class="form-label">{{ form.edad.label }}</label>
+                            {{ form.edad }}
+                            {% if form.edad.errors %}
+                                <div class="text-danger small">{{ form.edad.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-4">
+                            <label for="{{ form.sexo.id_for_label }}" class="form-label">{{ form.sexo.label }}</label>
+                            {{ form.sexo }}
+                            {% if form.sexo.errors %}
+                                <div class="text-danger small">{{ form.sexo.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-4">
+                            <label for="{{ form.tipo_ingreso.id_for_label }}" class="form-label">{{ form.tipo_ingreso.label }}</label>
+                            {{ form.tipo_ingreso }}
+                            {% if form.tipo_ingreso.errors %}
+                                <div class="text-danger small">{{ form.tipo_ingreso.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Información de Hospitalización -->
+                    <div class="section-divider">
+                        <h6 class="section-title">
+                            <i class="fas fa-hospital me-2"></i>
+                            Información de Hospitalización
+                        </h6>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="{{ form.días_estancia.id_for_label }}" class="form-label">{{ form.días_estancia.label }}</label>
+                            {{ form.días_estancia }}
+                            {% if form.días_estancia.errors %}
+                                <div class="text-danger small">{{ form.días_estancia.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-4">
+                            <label for="{{ form.servicioalta.id_for_label }}" class="form-label">{{ form.servicioalta.label }}</label>
+                            {{ form.servicioalta }}
+                            {% if form.servicioalta.errors %}
+                                <div class="text-danger small">{{ form.servicioalta.errors.0 }}</div>
+                            {% endif %}
+                            <div id="servicioalta_manual" style="display: none;" class="mt-2">
+                                <input type="text" class="form-control" id="servicioalta_manual_input" 
+                                       placeholder="Código de servicio (ej: 20, 21)">
+                                <small class="text-muted">Escriba el código numérico del servicio</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="{{ form.situacion_al_alta.id_for_label }}" class="form-label">{{ form.situacion_al_alta.label }}</label>
+                            {{ form.situacion_al_alta }}
+                            {% if form.situacion_al_alta.errors %}
+                                <div class="text-danger small">{{ form.situacion_al_alta.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Cuidados Intensivos -->
+                    <div class="section-divider">
+                        <h6 class="section-title">
+                            <i class="fas fa-procedures me-2"></i>
+                            Cuidados Intensivos
+                        </h6>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="{{ form.cuidados_intensivos.id_for_label }}" class="form-label">{{ form.cuidados_intensivos.label }}</label>
+                            {{ form.cuidados_intensivos }}
+                            {% if form.cuidados_intensivos.errors %}
+                                <div class="text-danger small">{{ form.cuidados_intensivos.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="{{ form.dias_uci.id_for_label }}" class="form-label">{{ form.dias_uci.label }}</label>
+                            {{ form.dias_uci }}
+                            {% if form.dias_uci.errors %}
+                                <div class="text-danger small">{{ form.dias_uci.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Diagnósticos -->
+                    <div class="section-divider">
+                        <h6 class="section-title">
+                            <i class="fas fa-notes-medical me-2"></i>
+                            Diagnósticos
+                        </h6>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="{{ form.dx_de_ingreso.id_for_label }}" class="form-label">{{ form.dx_de_ingreso.label }}</label>
+                            {{ form.dx_de_ingreso }}
+                            {% if form.dx_de_ingreso.errors %}
+                                <div class="text-danger small">{{ form.dx_de_ingreso.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="{{ form.dx_principal_egreso.id_for_label }}" class="form-label">{{ form.dx_principal_egreso.label }}</label>
+                            {{ form.dx_principal_egreso }}
+                            {% if form.dx_principal_egreso.errors %}
+                                <div class="text-danger small">{{ form.dx_principal_egreso.errors.0 }}</div>
+                            {% endif %}
+                            <!-- Campo de texto para código manual -->
+                            <div id="dx_principal_manual" style="display: none;" class="mt-2">
+                                <input type="text" class="form-control" id="dx_principal_manual_input" 
+                                       placeholder="Ingrese código CIE-10 (ej: I63, J18)">
+                                <small class="text-muted">Escriba el código manualmente</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Diagnósticos Relacionados -->
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <label for="{{ form.dxr_1.id_for_label }}" class="form-label">{{ form.dxr_1.label }}</label>
+                            {{ form.dxr_1 }}
+                            {% if form.dxr_1.errors %}
+                                <div class="text-danger small">{{ form.dxr_1.errors.0 }}</div>
+                            {% endif %}
+                            <div id="dxr_1_manual" style="display: none;" class="mt-2">
+                                <input type="text" class="form-control" id="dxr_1_manual_input" 
+                                       placeholder="Código CIE-10">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="{{ form.dxr_2.id_for_label }}" class="form-label">{{ form.dxr_2.label }}</label>
+                            {{ form.dxr_2 }}
+                            {% if form.dxr_2.errors %}
+                                <div class="text-danger small">{{ form.dxr_2.errors.0 }}</div>
+                            {% endif %}
+                            <div id="dxr_2_manual" style="display: none;" class="mt-2">
+                                <input type="text" class="form-control" id="dxr_2_manual_input" 
+                                       placeholder="Código CIE-10">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="{{ form.dxr_3.id_for_label }}" class="form-label">{{ form.dxr_3.label }}</label>
+                            {{ form.dxr_3 }}
+                            {% if form.dxr_3.errors %}
+                                <div class="text-danger small">{{ form.dxr_3.errors.0 }}</div>
+                            {% endif %}
+                            <div id="dxr_3_manual" style="display: none;" class="mt-2">
+                                <input type="text" class="form-control" id="dxr_3_manual_input" 
+                                       placeholder="Código CIE-10">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="{{ form.dxr_4.id_for_label }}" class="form-label">{{ form.dxr_4.label }}</label>
+                            {{ form.dxr_4 }}
+                            {% if form.dxr_4.errors %}
+                                <div class="text-danger small">{{ form.dxr_4.errors.0 }}</div>
+                            {% endif %}
+                            <div id="dxr_4_manual" style="display: none;" class="mt-2">
+                                <input type="text" class="form-control" id="dxr_4_manual_input" 
+                                       placeholder="Código CIE-10">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Procedimientos e Infecciones -->
+                    <div class="section-divider">
+                        <h6 class="section-title">
+                            <i class="fas fa-syringe me-2"></i>
+                            Procedimientos e Infecciones
+                        </h6>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="{{ form.proc1.id_for_label }}" class="form-label">{{ form.proc1.label }}</label>
+                            {{ form.proc1 }}
+                            {% if form.proc1.errors %}
+                                <div class="text-danger small">{{ form.proc1.errors.0 }}</div>
+                            {% endif %}
+                            <div id="proc1_manual" style="display: none;" class="mt-2">
+                                <input type="text" class="form-control" id="proc1_manual_input" 
+                                       placeholder="Código procedimiento (ej: 43.11)">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="{{ form.infecciones.id_for_label }}" class="form-label">{{ form.infecciones.label }}</label>
+                            {{ form.infecciones }}
+                            {% if form.infecciones.errors %}
+                                <div class="text-danger small">{{ form.infecciones.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-4">
+                            <label for="{{ form.infeccion_quirurgica.id_for_label }}" class="form-label">{{ form.infeccion_quirurgica.label }}</label>
+                            {{ form.infeccion_quirurgica }}
+                            {% if form.infeccion_quirurgica.errors %}
+                                <div class="text-danger small">{{ form.infeccion_quirurgica.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Tipo de Servicio -->
+                    <div class="section-divider">
+                        <h6 class="section-title">
+                            <i class="fas fa-building me-2"></i>
+                            Tipo de Servicio
+                        </h6>
+                    </div>
+                    
+                    <div class="row mb-4">
+                        <div class="col-md-12">
+                            <label for="{{ form.tipo_servicio.id_for_label }}" class="form-label">{{ form.tipo_servicio.label }}</label>
+                            {{ form.tipo_servicio }}
+                            {% if form.tipo_servicio.errors %}
+                                <div class="text-danger small">{{ form.tipo_servicio.errors.0 }}</div>
+                            {% endif %}
+                            <div class="form-text">
+                                <small class="text-muted">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Seleccione el tipo de servicio que corresponde al alta del paciente
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Errores generales del formulario -->
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {{ form.non_field_errors }}
+                        </div>
+                    {% endif %}
+
+                    <!-- Botón de envío -->
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-brain me-2"></i>
+                            Realizar Predicción
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Función para manejar campos manuales
+    function setupManualField(selectId, manualDivId, manualInputId) {
+        const selectElement = document.getElementById(selectId);
+        const manualDiv = document.getElementById(manualDivId);
+        const manualInput = document.getElementById(manualInputId);
+        
+        if (selectElement && manualDiv && manualInput) {
+            selectElement.addEventListener('change', function() {
+                if (this.value === 'OTRO') {
+                    manualDiv.style.display = 'block';
+                    manualInput.required = true;
+                    manualInput.focus();
+                } else {
+                    manualDiv.style.display = 'none';
+                    manualInput.required = false;
+                    manualInput.value = '';
+                }
+            });
+            
+            // Sincronizar el valor del campo manual con el select oculto
+            manualInput.addEventListener('input', function() {
+                if (selectElement.value === 'OTRO') {
+                    // Crear una opción temporal con el valor ingresado
+                    let tempOption = selectElement.querySelector('option[data-manual="true"]');
+                    if (!tempOption) {
+                        tempOption = document.createElement('option');
+                        tempOption.setAttribute('data-manual', 'true');
+                        selectElement.appendChild(tempOption);
+                    }
+                    tempOption.value = this.value;
+                    tempOption.selected = true;
+                }
+            });
+        }
+    }
+    
+    // Configurar todos los campos que tienen opción manual
+    setupManualField('id_servicioalta', 'servicioalta_manual', 'servicioalta_manual_input');
+    setupManualField('id_dx_principal_egreso', 'dx_principal_manual', 'dx_principal_manual_input');
+    setupManualField('id_proc1', 'proc1_manual', 'proc1_manual_input');
+    setupManualField('id_dxr_1', 'dxr_1_manual', 'dxr_1_manual_input');
+    setupManualField('id_dxr_2', 'dxr_2_manual', 'dxr_2_manual_input');
+    setupManualField('id_dxr_3', 'dxr_3_manual', 'dxr_3_manual_input');
+    setupManualField('id_dxr_4', 'dxr_4_manual', 'dxr_4_manual_input');
+    
+    // Interceptar el envío del formulario para usar valores manuales
+    const form = document.querySelector('form');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            // Para cada campo manual activo, actualizar el select correspondiente
+            const manualFields = [
+                {select: 'id_servicioalta', input: 'servicioalta_manual_input'},
+                {select: 'id_dx_principal_egreso', input: 'dx_principal_manual_input'},
+                {select: 'id_proc1', input: 'proc1_manual_input'},
+                {select: 'id_dxr_1', input: 'dxr_1_manual_input'},
+                {select: 'id_dxr_2', input: 'dxr_2_manual_input'},
+                {select: 'id_dxr_3', input: 'dxr_3_manual_input'},
+                {select: 'id_dxr_4', input: 'dxr_4_manual_input'}
+            ];
+            
+            manualFields.forEach(field => {
+                const select = document.getElementById(field.select);
+                const input = document.getElementById(field.input);
+                
+                if (select && input && select.value === 'OTRO' && input.value.trim()) {
+                    // Crear input hidden con el valor manual
+                    const hiddenInput = document.createElement('input');
+                    hiddenInput.type = 'hidden';
+                    hiddenInput.name = select.name + '_manual';
+                    hiddenInput.value = input.value.trim();
+                    form.appendChild(hiddenInput);
+                }
+            });
+        });
+    }
+});
+</script>
+
+{% endblock %}
