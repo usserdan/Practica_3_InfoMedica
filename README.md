@@ -1,7 +1,7 @@
 # 🎯 Clasificación de Grupos Relacionados por el Diagnóstico (GRD)
 
 <p align="center">
-  <img src="logoUdeA.png" alt="Logo UdeA" width="500"/>
+  <img src="logoU.png" alt="Logo UdeA" width="500"/>
 </p>
 
 
