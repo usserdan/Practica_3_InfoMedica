@@ -23,7 +23,7 @@ El objetivo de este proyecto es construir un modelo de inteligencia artificial c
 ## 📂 Estructura del proyecto
 
 - **Notebook_XGBoost.ipynb:** contiene todo el flujo de desarrollo, desde la limpieza de datos hasta el entrenamiento y evaluación del modelo.
-- **api/**: Carpeta con el código fuente de la API Django.
+- **infomedica_api/**: Carpeta con el código fuente de la API Django.
 - **data/**: Datos anonimizados utilizados para el entrenamiento y pruebas.
 - **requirements.txt:** Dependencias necesarias para ejecutar el proyecto.
 - **README.md:** Documentación del proyecto.
