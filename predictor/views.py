@@ -23,7 +23,6 @@ def prediction_form_view(request):
             try:
                 form_data = form.cleaned_data
                 
-                # procesar valores manuales
                 manual_fields = ['servicioalta', 'dx_principal_egreso', 'proc1', 'dxr_1', 'dxr_2', 'dxr_3', 'dxr_4']
                 for field in manual_fields:
                     manual_value = request.POST.get(f'{field}_manual')
@@ -37,7 +36,6 @@ def prediction_form_view(request):
                         else:
                             form_data[field] = 'MISSING'
                 
-                # codificación de variables
                 sexo_encoded = 0 if form_data['sexo'] == 'F' else 1
                 tipo_ingreso_encoded = 0 if form_data['tipo_ingreso'] == 'URGENCIA' else 1
                 cuidados_intensivos_encoded = 0 if form_data['cuidados_intensivos'] == 'NO' else 1
@@ -45,12 +43,10 @@ def prediction_form_view(request):
                 infecciones_encoded = 0 if form_data['infecciones'] == 'NO' else 1
                 infeccion_quirurgica_encoded = 0 if form_data['infeccion_quirurgica'] == 'NO' else 1
                 
-                # one-hot encoding para tipo_servicio
                 tipo_servicio_NO_APLICA = 1 if form_data['tipo_servicio'] == 'NO APLICA' else 0
                 tipo_servicio_URGENCIA_ADULTOS = 1 if form_data['tipo_servicio'] == 'URGENCIA ADULTOS' else 0
                 tipo_servicio_URGENCIA_PEDIATRICAS = 1 if form_data['tipo_servicio'] == 'URGENCIA PEDIATRICAS' else 0
                 
-                # preparar códigos con prefijo X
                 servicioalta_code = f"X{form_data['servicioalta']}"
                 dx_de_ingreso_code = f"X{form_data['dx_de_ingreso']}"
                 
@@ -60,7 +56,7 @@ def prediction_form_view(request):
                 else:
                     proc1_code = f"X{proc1_value}"
                 
-                # crear DataFrame con el orden exacto de FEATURES
+                # crear dataframe con orden exacto de features
                 data_dict = {
                     'edad': form_data['edad'],
                     'sexo': sexo_encoded,
@@ -90,14 +86,12 @@ def prediction_form_view(request):
                 
                 df = pd.DataFrame([data], columns=FEATURES)
                 
-                # convertir variables categóricas
                 categorical_columns = ['servicioalta', 'dx_de_ingreso', 'dx_principal_egreso', 
                                      'dxr_1', 'dxr_2', 'dxr_3', 'dxr_4', 'proc1']
                 for col in categorical_columns:
                     if col in df.columns:
                         df[col] = df[col].astype('category')
                 
-                # predicción
                 model = get_model()
                 encoder = get_label_encoder()
                 
@@ -112,7 +106,7 @@ def prediction_form_view(request):
                 
                 prediction_code = y_pred_original[0]
                 
-                # remover la X del resultado para mostrar al usuario
+                # remover la x del resultado para mostrar al usuario
                 if prediction_code.startswith('X'):
                     display_code = prediction_code[1:]
                 else:
@@ -147,7 +141,55 @@ class PredictView(APIView):
         data = serializer.validated_data
 
         try:
-            df = pd.DataFrame([[data[feature] for feature in FEATURES]], columns=FEATURES)
+            processed_data = {}
+            
+            processed_data['edad'] = data['edad']
+            processed_data['sexo'] = data['sexo']
+            processed_data['tipo_ingreso'] = data['tipo_ingreso']
+            processed_data['días_estancia'] = data['días_estancia']
+            processed_data['cuidados_intensivos'] = data['cuidados_intensivos']
+            processed_data['dias_uci'] = data['dias_uci']
+            processed_data['situacion_al_alta'] = data['situacion_al_alta']
+            processed_data['infecciones'] = data['infecciones']
+            processed_data['infeccion_quirurgica'] = data['infeccion_quirurgica']
+            
+            processed_data['tipo_servicio_NO APLICA'] = data['tipo_servicio_NO_APLICA']
+            processed_data['tipo_servicio_URGENCIA ADULTOS'] = data['tipo_servicio_URGENCIA_ADULTOS']
+            processed_data['tipo_servicio_URGENCIA PEDIATRICAS'] = data['tipo_servicio_URGENCIA_PEDIATRICAS']
+            
+            servicioalta_value = str(data['servicioalta'])
+            processed_data['servicioalta'] = f"X{servicioalta_value}"
+            
+            dx_de_ingreso_value = str(data['dx_de_ingreso'])
+            processed_data['dx_de_ingreso'] = f"X{dx_de_ingreso_value}"
+            
+            processed_data['dx_principal_egreso'] = str(data['dx_principal_egreso'])
+            
+            # procesar dxr fields
+            for dxr_field in ['dxr_1', 'dxr_2', 'dxr_3', 'dxr_4']:
+                dxr_value = str(data[dxr_field])
+                if dxr_value == '0' or dxr_value == '' or dxr_value.lower() == 'missing':
+                    processed_data[dxr_field] = 'MIS'  # usar MIS en lugar de MISSING
+                else:
+                    processed_data[dxr_field] = dxr_value
+            
+            proc1_value = str(data['proc1'])
+            if proc1_value == '0' or proc1_value == '' or proc1_value.lower() == 'missing':
+                processed_data['proc1'] = 'XMISSING'
+            else:
+                processed_data['proc1'] = f"X{proc1_value}"
+            
+            data_list = []
+            for feature in FEATURES:
+                data_list.append(processed_data[feature])
+            
+            df = pd.DataFrame([data_list], columns=FEATURES)
+            
+            categorical_columns = ['servicioalta', 'dx_de_ingreso', 'dx_principal_egreso', 
+                                 'dxr_1', 'dxr_2', 'dxr_3', 'dxr_4', 'proc1']
+            for col in categorical_columns:
+                if col in df.columns:
+                    df[col] = df[col].astype('category')
 
             model = get_model()
             encoder = get_label_encoder()
@@ -156,15 +198,28 @@ class PredictView(APIView):
             y_pred_original = encoder.inverse_transform(y_pred_encoded)
             
             try:
-                y_proba = model.predict_proba(df).tolist()
+                y_proba = model.predict_proba(df)
+                confidence = float(np.max(y_proba)) * 100
+                proba_list = y_proba[0].tolist()
             except Exception:
-                y_proba = None
+                confidence = None
+                proba_list = None
+
+            prediction_code = y_pred_original[0]
+            
+            # remover la x del resultado para mostrar al usuario
+            if prediction_code.startswith('X'):
+                display_code = prediction_code[1:]
+            else:
+                display_code = prediction_code
 
             response = {
-                "prediction": y_pred_original[0] if len(y_pred_original) else None,
+                "prediction": display_code,
+                "prediction_full_code": prediction_code,
                 "prediction_encoded": int(y_pred_encoded[0]) if len(y_pred_encoded) else None,
-                "proba": y_proba[0] if y_proba else None,
-                "input": data
+                "confidence": confidence,
+                "probabilities": proba_list,
+                "processed_input": processed_data
             }
             return Response(response, status=status.HTTP_200_OK)
 
