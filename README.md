@@ -65,11 +65,8 @@ Se hizo una interfaz web mediante Django, donde los usuarios pueden ingresar los
    ```bash
    pip install -r requirements.txt
    ```
-5. **Entra a la carpeta de la API**:
-   ```bash
-   cd api
-   ```
-6. **Ejecuta el servidor de Django**:
+
+5. **Ejecuta el servidor de Django**:
    ```bash
    python manage.py runserver
    ```
@@ -84,7 +81,7 @@ La predicción del GRD se realiza a través de un formulario HTML disponible en 
 **Pasos:**
 1. Abre el enlace del servidor en tu navegador (por defecto [http://localhost:8000](http://localhost:8000)).
 2. Llena el formulario con los datos clínicos solicitados.
-3. Haz clic en "Enviar" para obtener la predicción del GRD en la misma página.
+3. Haz clic en "Realizar Predicción" para obtener la predicción del GRD en la misma página.
 
 Toda la interacción se realiza desde la web, no es necesario usar herramientas como `curl`.
 
